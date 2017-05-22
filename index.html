@@ -49,7 +49,7 @@ function draw() {
       .attr("height", height);
   svg = d3.select("svg");
 
-  d3.json("coratings.json", function(error, graph) {
+  d3.json("coratingsSmall.json", function(error, graph) {
     if (error) throw error;
 
     var linkData = graph.links
