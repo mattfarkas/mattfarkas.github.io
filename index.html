@@ -150,7 +150,7 @@ function draw() {
              .style("opacity", .9);
            divTwo.html("Num.<br>Co-Ratings: " + d.numCrossReviews +
                     "<br><br>Avg. Difference in Rating: " + d.avgDiff.toFixed(2))
-             .style("left", (d3.event.pageX) + "px")
+             .style("left", (d3.event.pageX+10) + "px")
              .style("top", (d3.event.pageY - 28) + "px");
            })
          .on("mouseout", function(d) {
@@ -165,7 +165,7 @@ function draw() {
       .data(graphData)
       .enter().append("circle")
         .attr("fill", function(d) { return color(d.stars); })
-        .attr("r", function(d) { return Math.sqrt(d.maxCoratings/4); })
+        .attr("r", function(d) { return Math.sqrt(d.maxCoratings/3); })
         .call(d3.drag()
             .on("start", dragstarted)
             .on("drag", dragged)
@@ -176,7 +176,7 @@ function draw() {
              .style("opacity", .9);
            div.html(d.name + "<br><br>Price Range: " +
                     d.priceRange + "<br>Avg. Rating: " + d.stars)
-             .style("left", (d3.event.pageX) + "px")
+             .style("left", (d3.event.pageX+10) + "px")
              .style("top", (d3.event.pageY - 28) + "px");
            })
          .on("mouseout", function(d) {
