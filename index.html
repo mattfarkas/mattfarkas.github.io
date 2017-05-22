@@ -10,18 +10,40 @@
   stroke: #fff;
   stroke-width: 1.5px;
 }
+.nodes text {
+  pointer-events: none;
+  font: 10px sans-serif;
+}
+
+div.tooltip {
+  position: absolute;
+  text-align: center;
+  width: 90px;
+  height: 85px;
+  padding: 2px;
+  font: 11px sans-serif;
+  background: lightsteelblue;
+  border: 0px;
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+
 </style>
 
 <body>
-  <label for="nRatings"
-         style="display: inline-block; width: 240px; text-align: right">
-         Min. Num. Co-Ratings = <span id="nRatings-value">100</span>
+  <label for="nRatings" style="display: inline-block; width: 240px; text-align: right">
+    Min. Num. Co-Ratings = <span id="nRatings-value">100</span>
   </label>
   <input id="slideNum" class="input-range" type="range" value="100" min="0" max="206" step="1">
 </body>
 
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script>
+
+var div = d3.select("body").append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0);
 
 var color = d3.scaleOrdinal(d3.schemeCategory20);
 var width = 1200;
@@ -37,12 +59,12 @@ var simulation = d3.forceSimulation()
     .force("center", d3.forceCenter(width / 2, height / 2));
 
 d3.selectAll("#slideNum")
-  .on("slide",function(evt, value) { d3.select("#nRatings-value").text(value); })
+  .call(function(evt, value) {
+    d3.select("#nRatings-value").text(value); })
   .on("change",draw);
 
 var drawn = false;
 draw();
-
 
 function draw() {
 
@@ -76,8 +98,8 @@ function draw() {
       .selectAll("line")
       .data(linkData)
       .enter().append("line")
-        // .attr("stroke", function(d) { return color(d.numCrossReviews); })
-        .attr("stroke-width", function(d) { return Math.pow(2-Math.log(d.avgDiff), 1.2); });
+        .attr("stroke", function(d) { return color(d.numCrossReviews); })
+        .attr("stroke-width", function(d) { return Math.pow(2-Math.log(d.avgDiff), 1.1); });
 
     var node = svg.append("g")
         .attr("class", "nodes")
@@ -85,15 +107,25 @@ function draw() {
       .data(graphData)
       .enter().append("circle")
         .attr("fill", function(d) { return color(d.maxCoratings); })
-        .attr("r", function(d) { return Math.sqrt(d.maxCoratings/5); })
+        .attr("r", function(d) { return Math.sqrt(d.maxCoratings/4); })
         .call(d3.drag()
             .on("start", dragstarted)
             .on("drag", dragged)
-            .on("end", dragended));
-
-    node.append("title")
-        .text(function(d) { return d.name + "\nPrice Range: " +
-                              d.priceRange + "\nAvg. Rating: " + d.stars; });
+            .on("end", dragended))
+        .on("mouseover", function(d) {
+           div.transition()
+             .duration(200)
+             .style("opacity", .9);
+           div.html(d.name + "<br><br>Price Range: " +
+                    d.priceRange + "<br>Avg. Rating: " + d.stars)
+             .style("left", (d3.event.pageX) + "px")
+             .style("top", (d3.event.pageY - 28) + "px");
+           })
+         .on("mouseout", function(d) {
+           div.transition()
+             .duration(500)
+             .style("opacity", 0);
+           });
 
     simulation
         .nodes(graph.nodes)
@@ -102,7 +134,12 @@ function draw() {
     simulation.force("link")
         .links(graph.links);
 
-    simulation.alpha(1.2).restart();
+    simulation.alpha(1.8).restart();
+
+    node.append("text")
+      .attr("dx", 12)
+      .attr("dy", ".35em")
+      .text(function(d) { return d.name });
 
     drawn = true;
 
