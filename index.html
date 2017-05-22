@@ -21,12 +21,42 @@ div.tooltip {
   width: 90px;
   height: 85px;
   padding: 2px;
-  font: 11px sans-serif;
+  font: 12px sans-serif;
   background: lightsteelblue;
-  border: 0px;
-  border-radius: 8px;
+  border: 2px;
+  border-radius: 10px;
   pointer-events: none;
+  left: 10px;
 }
+
+div.tooltipTwo {
+  position: absolute;
+  text-align: center;
+  width: 90px;
+  height: 85px;
+  padding: 2px;
+  font: 12px sans-serif;
+  background: lightsteelblue;
+  border: 2px;
+  border-radius: 10px;
+  pointer-events: none;
+  left: 10px;
+}
+
+/*Trying to do the little arrow thing...not worth*/
+/*div.tooltip:before {
+      content: "";
+      position: absolute;
+      width: 0;
+      height: 0;
+      border-width: 10px;
+      border-style: solid;
+      border-color: #FFFFFF transparent transparent transparent;
+      top: 15px;
+      left: -15px;
+      -webkit-transform: rotate(90deg);
+      color: slightsteelblue;
+}*/
 
 
 </style>
@@ -35,7 +65,7 @@ div.tooltip {
   <label for="nRatings" style="display: inline-block; width: 240px; text-align: right">
     Min. Num. Co-Ratings = <span id="nRatings-value">100</span>
   </label>
-  <input id="slideNum" class="input-range" type="range" value="100" min="0" max="206" step="1">
+  <input id="slideNum" class="input-range" type="range" value="100" min="75" max="206" step="5">
 </body>
 
 <script src="https://d3js.org/d3.v4.min.js"></script>
@@ -43,6 +73,10 @@ div.tooltip {
 
 var div = d3.select("body").append("div")
     .attr("class", "tooltip")
+    .style("opacity", 0);
+
+var divTwo = d3.select("body").append("div")
+    .attr("class", "tooltipTwo")
     .style("opacity", 0);
 
 var color = d3.scaleOrdinal(d3.schemeCategory20);
@@ -54,7 +88,7 @@ var x = d3.scaleLinear()
     .clamp(true);
 
 var simulation = d3.forceSimulation()
-    .force("link", d3.forceLink().id(function(d) { return d.name; }))
+    .force("link", d3.forceLink().id(function(d) { return d.id; }))
     .force("charge", d3.forceManyBody())
     .force("center", d3.forceCenter(width / 2, height / 2));
 
@@ -80,7 +114,7 @@ function draw() {
       .attr("height", height);
   svg = d3.select("svg");
 
-  d3.json("coratingsMed2.json", function(error, graph) {
+  d3.json("coratings.json", function(error, graph) {
     if (error) throw error;
 
     var linkData = graph.links
@@ -98,7 +132,7 @@ function draw() {
       .selectAll("line")
       .data(linkData)
       .enter().append("line")
-        .attr("stroke", function(d) { return color(d.numCrossReviews); })
+        // .attr("stroke", function(d) { return color(d.numCrossReviews); })
         .attr("stroke-width", function(d) { return Math.pow(2-Math.log(d.avgDiff), 1.1); });
 
     var node = svg.append("g")
