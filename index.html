@@ -44,6 +44,16 @@ div.tooltipTwo {
   opacity: 1;
 }
 
+label {
+  float: left;
+  display: inline-block;
+  width: 240px;
+  padding: 6px;
+  z-index: 1;
+}
+
+
+
 /*Trying to do the little arrow thing...not worth*/
 /*div.tooltip:before {
       content: "";
@@ -63,10 +73,20 @@ div.tooltipTwo {
 </style>
 
 <body>
-  <label for="nRatings" style="display: inline-block; width: 240px; text-align: right">
+  <label for="nRatings" style="display: inline-block; text-align: left">
     Min. Num. Co-Ratings = <span id="nRatings-value">100</span>
+    <input style="position: relative;" id="slideNum" class="input-range" type="range" value="100" min="75" max="206" step="5">
   </label>
-  <input id="slideNum" class="input-range" type="range" value="100" min="75" max="206" step="5">
+  <label>Nodes are represented by restaurants, edges are an amount of co-ratings between them.
+  </label>
+  <label>Thickness of edges corresponds to Num. of Co-ratings between the connected restaurants.
+  </label>
+  <label>A darker line means that those to restaurants have a smaller average difference.
+  </label>
+
+
+
+
 </body>
 
 <script src="https://d3js.org/d3.v4.min.js"></script>
@@ -146,8 +166,8 @@ function draw() {
       .data(linkData)
       .enter().append("line")
         // .attr("stroke", function(d) { return color(d.numCrossReviews); })
-        .attr("stroke-width", function(d) { return Math.pow(2-Math.log(d.avgDiff), 1.1); })
-        .attr("stroke-opacity", function(d) { return 1 - 1/(1 + 100*Math.exp(-5*d.avgDiff)) })
+        .attr("stroke-width", function(d) { return Math.pow(d.numCrossReviews/30, 0.9); })
+        .attr("stroke-opacity", function(d) { return 1 - 1/(1 + 50*Math.exp(-5*d.avgDiff)) })
       .on("mouseover", function(d) {
            divTwo.transition()
              .duration(200)
