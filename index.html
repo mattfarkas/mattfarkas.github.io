@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<style>
+.links line {
+  stroke: #999;
+  stroke-opacity: 0.6;
+}
+.nodes circle {
+  stroke: #fff;
+  stroke-width: 1.5px;
+}
+</style>
+
+<body>
+  <input id="slideNum" class="input-range" type="range" value="0" min="0" max="206" step="1">
+</body>
+
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script>
+
+var color = d3.scaleOrdinal(d3.schemeCategory20);
+var width = 960;
+var height = 600;
+
+var simulation = d3.forceSimulation()
+    .force("link", d3.forceLink().id(function(d) { return d.name; }))
+    .force("charge", d3.forceManyBody())
+    .force("center", d3.forceCenter(width / 2, height / 2));
+
+d3.selectAll("#slideNum")
+  .on('change',draw);
+
+var drawn = false;
+draw();
+
+// yo
+
+function draw() {
+
+  var slideVal = d3.select("#slideNum").property("value");
+
+  if (drawn) {
+    svg.remove();
+  };
+  svg = d3.selectAll("body")
+      .append("svg")
+      .attr("width", width)
+      .attr("height", height);
+  svg = d3.select("svg");
+
+  d3.json("coratings.json", function(error, graph) {
+    if (error) throw error;
+
+    var linkData = graph.links
+      .filter(function(d) {
+        return d.numCrossReviews >= slideVal;
+      });
+
+    var graphData = graph.nodes
+      .filter(function(d) {
+        return d.maxCoratings >= slideVal;
+      });
+
+    var link = svg.append("g")
+        .attr("class", "links")
+      .selectAll("line")
+      // .data(graph.links)
+      .data(linkData)
+      .enter().append("line")
+        .attr("stroke", function(d) { return color(d.numCrossReviews); })
+        .attr("stroke-width", function(d) { return Math.pow(2-Math.log(d.avgDiff), 1.5); });
+
+    var node = svg.append("g")
+        .attr("class", "nodes")
+      .selectAll("circle")
+      // .data(graph.nodes)
+      .data(graphData)
+      .enter().append("circle")
+        // .attr("r", 5)
+        .attr("fill", function(d) { return color(d.maxCoratings); })
+        .attr("r", function(d) { return Math.sqrt(d.maxCoratings/10); })
+        .call(d3.drag()
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended));
+
+    node.append("title")
+        .text(function(d) { return d.name + "\nPrice Range: " +
+                              d.priceRange + "\nAvg. Rating: " + d.stars; });
+
+    simulation
+        .nodes(graph.nodes)
+        .on("tick", ticked);
+
+    simulation.force("link")
+        .links(graph.links);
+
+    simulation.alpha(1.0).restart();
+
+    drawn = true;
+
+    function ticked() {
+      link
+          .attr("x1", function(d) { return d.source.x; })
+          .attr("y1", function(d) { return d.source.y; })
+          .attr("x2", function(d) { return d.target.x; })
+          .attr("y2", function(d) { return d.target.y; });
+
+      node
+          .attr("cx", function(d) { return d.x; })
+          .attr("cy", function(d) { return d.y; });
+    }
+  });
+}
+
+
+
+function dragstarted(d) {
+  if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+  d.fx = d.x;
+  d.fy = d.y;
+}
+
+function dragged(d) {
+  d.fx = d3.event.x;
+  d.fy = d3.event.y;
+}
+
+function dragended(d) {
+  if (!d3.event.active) simulation.alphaTarget(0);
+  d.fx = null;
+  d.fy = null;
+}
+
+</script>
