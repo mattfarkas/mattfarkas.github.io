@@ -13,15 +13,23 @@
 </style>
 
 <body>
-  <input id="slideNum" class="input-range" type="range" value="0" min="0" max="206" step="1">
+  <label for="nRatings"
+         style="display: inline-block; width: 240px; text-align: right">
+         Min. Num. Co-Ratings = <span id="nRatings-value">100</span>
+  </label>
+  <input id="slideNum" class="input-range" type="range" value="100" min="0" max="206" step="1">
 </body>
 
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script>
 
 var color = d3.scaleOrdinal(d3.schemeCategory20);
-var width = 960;
-var height = 600;
+var width = 1200;
+var height = 800;
+var x = d3.scaleLinear()
+    .domain([0, 180])
+    .range([0, width])
+    .clamp(true);
 
 var simulation = d3.forceSimulation()
     .force("link", d3.forceLink().id(function(d) { return d.name; }))
@@ -29,16 +37,17 @@ var simulation = d3.forceSimulation()
     .force("center", d3.forceCenter(width / 2, height / 2));
 
 d3.selectAll("#slideNum")
-  .on('change',draw);
+  .on("slide",function(evt, value) { d3.select("#nRatings-value").text(value); })
+  .on("change",draw);
 
 var drawn = false;
 draw();
 
-// yo
 
 function draw() {
 
   var slideVal = d3.select("#slideNum").property("value");
+  d3.select("#nRatings-value").text(slideVal);
 
   if (drawn) {
     svg.remove();
@@ -49,7 +58,7 @@ function draw() {
       .attr("height", height);
   svg = d3.select("svg");
 
-  d3.json("coratingsSmall.json", function(error, graph) {
+  d3.json("coratingsMed2.json", function(error, graph) {
     if (error) throw error;
 
     var linkData = graph.links
@@ -65,21 +74,18 @@ function draw() {
     var link = svg.append("g")
         .attr("class", "links")
       .selectAll("line")
-      // .data(graph.links)
       .data(linkData)
       .enter().append("line")
-        .attr("stroke", function(d) { return color(d.numCrossReviews); })
-        .attr("stroke-width", function(d) { return Math.pow(2-Math.log(d.avgDiff), 1.5); });
+        // .attr("stroke", function(d) { return color(d.numCrossReviews); })
+        .attr("stroke-width", function(d) { return Math.pow(2-Math.log(d.avgDiff), 1.2); });
 
     var node = svg.append("g")
         .attr("class", "nodes")
       .selectAll("circle")
-      // .data(graph.nodes)
       .data(graphData)
       .enter().append("circle")
-        // .attr("r", 5)
         .attr("fill", function(d) { return color(d.maxCoratings); })
-        .attr("r", function(d) { return Math.sqrt(d.maxCoratings/10); })
+        .attr("r", function(d) { return Math.sqrt(d.maxCoratings/5); })
         .call(d3.drag()
             .on("start", dragstarted)
             .on("drag", dragged)
@@ -96,7 +102,7 @@ function draw() {
     simulation.force("link")
         .links(graph.links);
 
-    simulation.alpha(1.0).restart();
+    simulation.alpha(1.2).restart();
 
     drawn = true;
 
