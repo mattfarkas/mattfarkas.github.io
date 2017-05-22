@@ -4,7 +4,7 @@
 <style>
 .links line {
   stroke: #999;
-  stroke-opacity: 0.6;
+  /*stroke-opacity: 0.6;*/
 }
 .nodes circle {
   stroke: #fff;
@@ -33,14 +33,15 @@ div.tooltipTwo {
   position: absolute;
   text-align: center;
   width: 90px;
-  height: 85px;
+  height: 70px;
   padding: 2px;
   font: 12px sans-serif;
-  background: lightsteelblue;
+  background: #f49725;
   border: 2px;
   border-radius: 10px;
   pointer-events: none;
   left: 10px;
+  opacity: 1;
 }
 
 /*Trying to do the little arrow thing...not worth*/
@@ -71,6 +72,17 @@ div.tooltipTwo {
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script>
 
+var zoom = d3.zoom()
+    .scaleExtent([1, 40])
+    .translateExtent([[-100, -100], [width + 90, height + 100]])
+    .on("zoom", zoomed);
+
+function zoomed() {
+  svg.attr("transform", d3.event.transform);
+  gX.call(xAxis.scale(d3.event.transform.rescaleX(x)));
+  gY.call(yAxis.scale(d3.event.transform.rescaleY(y)));
+}
+
 var div = d3.select("body").append("div")
     .attr("class", "tooltip")
     .style("opacity", 0);
@@ -80,11 +92,12 @@ var divTwo = d3.select("body").append("div")
     .style("opacity", 0);
 
 var color = d3.scaleOrdinal(d3.schemeCategory20);
+// var colorGoodBad
 var width = 1200;
 var height = 800;
 var x = d3.scaleLinear()
-    .domain([0, 180])
-    .range([0, width])
+    .domain([0, 5])
+    .range([0, 5])
     .clamp(true);
 
 var simulation = d3.forceSimulation()
@@ -133,14 +146,29 @@ function draw() {
       .data(linkData)
       .enter().append("line")
         // .attr("stroke", function(d) { return color(d.numCrossReviews); })
-        .attr("stroke-width", function(d) { return Math.pow(2-Math.log(d.avgDiff), 1.1); });
+        .attr("stroke-width", function(d) { return Math.pow(2-Math.log(d.avgDiff), 1.1); })
+        .attr("stroke-opacity", function(d) { return 1 - 1/(1 + 100*Math.exp(-5*d.avgDiff)) })
+      .on("mouseover", function(d) {
+           divTwo.transition()
+             .duration(200)
+             .style("opacity", .9);
+           divTwo.html("Num.<br>Co-Ratings: " + d.numCrossReviews +
+                    "<br><br>Avg. Difference in Rating: " + d.avgDiff.toFixed(2))
+             .style("left", (d3.event.pageX) + "px")
+             .style("top", (d3.event.pageY - 28) + "px");
+           })
+         .on("mouseout", function(d) {
+           divTwo.transition()
+             .duration(500)
+             .style("opacity", 0);
+           });;
 
     var node = svg.append("g")
         .attr("class", "nodes")
       .selectAll("circle")
       .data(graphData)
       .enter().append("circle")
-        .attr("fill", function(d) { return color(d.maxCoratings); })
+        .attr("fill", function(d) { return color(d.stars); })
         .attr("r", function(d) { return Math.sqrt(d.maxCoratings/4); })
         .call(d3.drag()
             .on("start", dragstarted)
