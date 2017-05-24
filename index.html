@@ -149,7 +149,7 @@ var x = d3.scaleLinear()
 
 var simulation = d3.forceSimulation()
     .force("link", d3.forceLink().id(function(d) { return d.id; }))
-    .force("charge", d3.forceManyBody())
+    .force("charge", d3.forceManyBody().strength(-100))
     .force("center", d3.forceCenter(width / 2, height / 2));
 
 // Trying to get text to update live....idk
@@ -299,7 +299,7 @@ function draw() {
     simulation.force("link")
         .links(graph.links);
 
-    simulation.alpha(1.8).restart();
+    simulation.alpha(2).restart();
 
     drawn = true;
 
