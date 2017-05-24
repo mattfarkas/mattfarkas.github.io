@@ -70,6 +70,9 @@ body {
   font-weight: 300;
   line-height: 15px;
 }
+#restList {
+  width: 10;
+}
 </style>
 <link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Open+Sans" />
 <body>
@@ -77,6 +80,8 @@ body {
     Min. Num. Co-Ratings = <span id="nRatings-value">100</span>
     <input style="position: relative;" id="slideNum" class="input-range" type="range" value="100" min="50" max="150" step="5">
     <br><input type="checkbox" id="myCheckbox" unchecked> Labels
+    <br><input type="checkbox" id="myFilter" unchecked> Filter by Restaurant
+    <br><div id="table_container"></div>
   </label>
   <label>Nodes are represented by restaurants, edges are an amount of co-ratings between them.
   </label>
@@ -91,6 +96,33 @@ body {
 
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script>
+
+// This is always starting as false
+var drawn = false;
+var filter = false;
+
+d3.json("coratings.json", function(error, graph) {
+    if (error) throw error;
+    var dropDown = d3.select("#table_container")
+                    .append("select")
+                    .attr("name", "restList")
+                    .on("change",function() {
+                      if (filter) {
+                        draw();
+                      }
+                    });
+
+    var options = dropDown.selectAll("option")
+                   .data(graph.nodes)
+                   .enter()
+                   .append("option");
+
+    options.text(function (d) { return d.name; })
+           .attr("value", function (d) { return d.id; });
+
+});
+
+
 
 var div = d3.select("#thisP").append("div")
     .attr("class", "tooltip")
@@ -121,10 +153,8 @@ d3.selectAll("#slideNum")
   .on("change",draw);
 
 d3.select("#myCheckbox").on("change",draw);
+d3.select("#myFilter").on("change",draw);
 
-// This is always starting as false
-var drawn = false;
-// var labels = false;
 draw();
 
 function draw() {
@@ -138,6 +168,13 @@ function draw() {
     labels = true;
   } else {
     labels = false;
+  };
+
+  // get labels bool
+  if(d3.select("#myFilter").property("checked")){
+    filter = true;
+  } else {
+    filter = false;
   };
 
   // resets the svg
@@ -154,42 +191,59 @@ function draw() {
   d3.json("coratings.json", function(error, graph) {
     if (error) throw error;
 
+    // filterID = "9a3DrZvpYxVs3k_qwlCNSw";
+    filterID = d3.select('select').property('value');
+
     // filter data on # co-ratings
     var linkData = graph.links
       .filter(function(d) {
-        return d.numCrossReviews >= slideVal;
+        if (filter) {
+          return d.numCrossReviews >= slideVal &
+               (d.source === filterID | d.target === filterID);
+        } else {
+         return d.numCrossReviews >= slideVal;
+        }
       });
+
+    // join data to get new id, and connecting node ids
+    sources = linkData.map(function(d) {return d.source;});
+    targets  = linkData.map(function(d) {return d.target;});
+
     var graphData = graph.nodes
       .filter(function(d) {
-        return d.maxCoratings >= slideVal;
+        if (filter) {
+          return d.maxCoratings >= slideVal &
+                  (d.id === filterID |
+                    (sources.indexOf(d.id) >= 0) | (targets.indexOf(d.id) >= 0));
+        } else {
+          return d.maxCoratings >= slideVal;
+        }
       });
 
     var link = svg.append("g")
-            .attr("class", "links")
-          .selectAll("line")
-          .data(linkData)
-          .enter().append("line")
-            // .attr("stroke", function(d) { return color(d.numCrossReviews); })
-            .attr("stroke-width", function(d) { return Math.pow(d.numCrossReviews/30, 0.9); })
-            .attr("stroke-opacity", function(d) { return 1 - 1/(1 + 50*Math.exp(-5*d.avgDiff)) })
-          .on("mouseover", function(d) {
-               divTwo.transition()
-                 .duration(200)
-                 .style("opacity", .9);
-               divTwo.html("Num.<br>Co-Ratings: " + d.numCrossReviews +
-                        "<br><br>Avg. Difference in Rating: " + d.avgDiff.toFixed(2))
-                 .style("left", (d3.event.pageX+10) + "px")
-                 .style("top", (d3.event.pageY - 28) + "px");
-               })
-             .on("mouseout", function(d) {
-               divTwo.transition()
-                 .duration(500)
-                 .style("opacity", 0);
-               });
+        .attr("class", "links")
+      .selectAll("line")
+      .data(linkData)
+      .enter().append("line")
+        .attr("stroke-width", function(d) { return Math.pow(d.numCrossReviews/30, 0.9); })
+        .attr("stroke-opacity", function(d) { return 1 - 1/(1 + 50*Math.exp(-5*d.avgDiff)) })
+      .on("mouseover", function(d) {
+           divTwo.transition()
+             .duration(200)
+             .style("opacity", .9);
+           divTwo.html("Num.<br>Co-Ratings: " + d.numCrossReviews +
+                    "<br><br>Avg. Difference in Rating: " + d.avgDiff.toFixed(2))
+             .style("left", (d3.event.pageX+10) + "px")
+             .style("top", (d3.event.pageY - 28) + "px");
+           })
+         .on("mouseout", function(d) {
+           divTwo.transition()
+             .duration(500)
+             .style("opacity", 0);
+           });
 
 
     var node = svg.selectAll("foo")
-      // .selectAll("circle")
       .data(graphData)
       .enter()
       .append("g")
@@ -242,9 +296,6 @@ function draw() {
           .attr("x2", function(d) { return d.target.x; })
           .attr("y2", function(d) { return d.target.y; });
 
-      // node
-      //     .attr("cx", function(d) { return d.x; })
-      //     .attr("cy", function(d) { return d.y; });
       node.attr("transform", function (d) {
         return "translate(" + d.x + "," + d.y + ")";
     });
