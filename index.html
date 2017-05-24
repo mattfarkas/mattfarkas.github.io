@@ -11,9 +11,12 @@
   stroke-width: 1.5px;
 }
 .nodes text {
-  pointer-events: none;
-  font: 10px sans-serif;
-  color: black;
+  font-family: "Open Sans";
+  font-size: 10px;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: 100;
+  line-height: 20px;
 }
 div.tooltip {
   position: absolute;
@@ -27,6 +30,11 @@ div.tooltip {
   border-radius: 10px;
   pointer-events: none;
   left: 10px;
+  font-family: "Open Sans";
+  font-size: 10px;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: 300;
 }
 div.tooltipTwo {
   position: absolute;
@@ -41,6 +49,11 @@ div.tooltipTwo {
   pointer-events: none;
   left: 10px;
   opacity: 1;
+  font-family: "Open Sans";
+  font-size: 10px;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: 300;
 }
 label {
   float: left;
@@ -49,8 +62,16 @@ label {
   padding: 6px;
   z-index: 1;
 }
+body {
+  font-family: "Open Sans";
+  font-size: 12px;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: 300;
+  line-height: 15px;
+}
 </style>
-
+<link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Open+Sans" />
 <body>
   <label for="nRatings" style="display: inline-block; text-align: left">
     Min. Num. Co-Ratings = <span id="nRatings-value">100</span>
