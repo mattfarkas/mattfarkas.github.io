@@ -180,11 +180,7 @@ function draw() {
   };
 
   // get labels bool
-  if(d3.select("#myFilter").property("checked")){
-    filter = true;
-  } else {
-    filter = false;
-  };
+  filter = d3.select("#myFilter").property("checked");
 
   // resets the svg
   if (drawn) {
@@ -200,14 +196,24 @@ function draw() {
   d3.json("coratings.json", function(error, graph) {
     if (error) throw error;
 
-    // filterID = "9a3DrZvpYxVs3k_qwlCNSw";
+    // Get restuarant from drop down
     filterID = d3.select('select').property('value');
+
+    // if filtering, change min slider to new val
+    newSlider = graph.nodes.filter(function(d) {return d.id === filterID;}).map(function(d) {return d.maxCoratings;})[0];
+    if (filter & newSlider < parseInt(slideVal)) {
+      diff = newSlider%5;
+      d3.select("#slideNum").property("value",newSlider-diff);
+      slideVal = d3.select("#slideNum").property("value");
+      d3.select("#nRatings-value").text(newSlider-diff);
+    }
 
     // filter data on # co-ratings
     var linkData = graph.links
       .filter(function(d) {
         if (filter) {
-          return (d.source === filterID | d.target === filterID);
+          return d.numCrossReviews >= slideVal &
+                  (d.source === filterID || d.target === filterID);
         } else {
          return d.numCrossReviews >= slideVal;
         }
@@ -220,20 +226,13 @@ function draw() {
     var graphData = graph.nodes
       .filter(function(d) {
         if (filter) {
-          return (d.id === filterID |
-                    (sources.indexOf(d.id) >= 0) | (targets.indexOf(d.id) >= 0));
+          return d.maxCoratings >= slideVal &
+                  (d.id === filterID ||
+                    (sources.indexOf(d.id) >= 0) || (targets.indexOf(d.id) >= 0));
         } else {
           return d.maxCoratings >= slideVal;
         }
       });
-
-    // if filtering, change min slider to new val
-    newSlider = graphData.filter(function(d) {return d.id === filterID;}).map(function(d) {return d.maxCoratings;})[0];
-    if (filter & newSlider < parseInt(slideVal)) {
-      diff = newSlider%5;
-      d3.select("#slideNum").property("value",newSlider-diff);
-      d3.select("#nRatings-value").text(newSlider-diff);
-    }
 
     var link = svg.append("g")
         .attr("class", "links")
