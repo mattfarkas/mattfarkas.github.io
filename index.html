@@ -97,10 +97,6 @@ body {
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script>
 
-// This is always starting as false
-var drawn = false;
-var filter = false;
-
 d3.json("coratings.json", function(error, graph) {
     if (error) throw error;
     var dropDown = d3.select("#table_container")
@@ -112,13 +108,23 @@ d3.json("coratings.json", function(error, graph) {
                       }
                     });
 
+
+
     var options = dropDown.selectAll("option")
-                   .data(graph.nodes)
+                   .data(graph.nodes.sort(function (a, b) {return d3.ascending(a.name, b.name)}))
                    .enter()
                    .append("option");
 
+    // var options = dropDown.selectAll("option")
+    //                .data(graph.nodes)
+    //                .enter()
+    //                .append("option");
+
+
     options.text(function (d) { return d.name; })
            .attr("value", function (d) { return d.id; });
+
+    dropDown.order();
 
 });
 
@@ -155,6 +161,9 @@ d3.selectAll("#slideNum")
 d3.select("#myCheckbox").on("change",draw);
 d3.select("#myFilter").on("change",draw);
 
+// This is always starting as false
+var drawn = false;
+var filter = false;
 draw();
 
 function draw() {
@@ -198,8 +207,7 @@ function draw() {
     var linkData = graph.links
       .filter(function(d) {
         if (filter) {
-          return d.numCrossReviews >= slideVal &
-               (d.source === filterID | d.target === filterID);
+          return (d.source === filterID | d.target === filterID);
         } else {
          return d.numCrossReviews >= slideVal;
         }
@@ -212,13 +220,20 @@ function draw() {
     var graphData = graph.nodes
       .filter(function(d) {
         if (filter) {
-          return d.maxCoratings >= slideVal &
-                  (d.id === filterID |
+          return (d.id === filterID |
                     (sources.indexOf(d.id) >= 0) | (targets.indexOf(d.id) >= 0));
         } else {
           return d.maxCoratings >= slideVal;
         }
       });
+
+    // if filtering, change min slider to new val
+    newSlider = graphData.filter(function(d) {return d.id === filterID;}).map(function(d) {return d.maxCoratings;})[0];
+    if (filter & newSlider < parseInt(slideVal)) {
+      diff = newSlider%5;
+      d3.select("#slideNum").property("value",newSlider-diff);
+      d3.select("#nRatings-value").text(newSlider-diff);
+    }
 
     var link = svg.append("g")
         .attr("class", "links")
