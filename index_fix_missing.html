@@ -1,3 +1,73 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<style>
+.links line {
+  stroke: #999;
+  /*stroke-opacity: 0.6;*/
+}
+.nodes circle {
+  stroke: #fff;
+  stroke-width: 1.5px;
+}
+.nodes text {
+  pointer-events: none;
+  font: 10px sans-serif;
+}
+div.tooltip {
+  position: absolute;
+  text-align: center;
+  width: 90px;
+  height: 85px;
+  padding: 2px;
+  font: 12px sans-serif;
+  background: lightsteelblue;
+  border: 2px;
+  border-radius: 10px;
+  pointer-events: none;
+  left: 10px;
+}
+div.tooltipTwo {
+  position: absolute;
+  text-align: center;
+  width: 90px;
+  height: 70px;
+  padding: 2px;
+  font: 12px sans-serif;
+  background: #f49725;
+  border: 2px;
+  border-radius: 10px;
+  pointer-events: none;
+  left: 10px;
+  opacity: 1;
+}
+label {
+  float: left;
+  display: inline-block;
+  width: 240px;
+  padding: 6px;
+  z-index: 1;
+}
+</style>
+
+<body>
+  <label for="nRatings" style="display: inline-block; text-align: left">
+    Min. Num. Co-Ratings = <span id="nRatings-value">100</span>
+    <input style="position: relative;" id="slideNum" class="input-range" type="range" value="100" min="50" max="150" step="5">
+  </label>
+  <label>Nodes are represented by restaurants, edges are an amount of co-ratings between them.
+  </label>
+  <label>Thickness of edges corresponds to Num. of Co-ratings between the connected restaurants.
+  </label>
+  <label>A darker line means that those to restaurants have a smaller average difference.
+  </label>
+  <label>Node size corresponds to the max num. of co-ratings that restaurant has with another.
+  </label>
+</body>
+
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script>
+
 var zoom = d3.zoom()
     .scaleExtent([1, 40])
     .translateExtent([[-100, -100], [width + 90, height + 100]])
@@ -87,19 +157,21 @@ function draw() {
            divTwo.transition()
              .duration(500)
              .style("opacity", 0);
-           });;
+           });
 
-    var node = svg.append("g")
-        .attr("class", "nodes")
-      .selectAll("circle")
+    var node = svg.selectAll("g")
       .data(graphData)
-      .enter().append("circle")
-        .attr("fill", function(d) { return color(d.stars); })
-        .attr("r", function(d) { return Math.sqrt(d.maxCoratings/3); })
+      .enter()
+      .append("g")
+        .attr("class", "nodes")
         .call(d3.drag()
             .on("start", dragstarted)
             .on("drag", dragged)
-            .on("end", dragended))
+            .on("end", dragended));
+
+    node.append("circle")
+        .attr("fill", function(d) { return color(d.stars); })
+        .attr("r", function(d) { return Math.sqrt(d.maxCoratings/3); })
         .on("mouseover", function(d) {
            div.transition()
              .duration(200)
@@ -124,11 +196,6 @@ function draw() {
 
     simulation.alpha(1.8).restart();
 
-    node.append("text")
-      .attr("dx", 12)
-      .attr("dy", ".35em")
-      .text(function(d) { return d.name });
-
     drawn = true;
 
     function ticked() {
@@ -138,9 +205,12 @@ function draw() {
           .attr("x2", function(d) { return d.target.x; })
           .attr("y2", function(d) { return d.target.y; });
 
-      node
-          .attr("cx", function(d) { return d.x; })
-          .attr("cy", function(d) { return d.y; });
+      // node
+      //     .attr("cx", function(d) { return d.x; })
+      //     .attr("cy", function(d) { return d.y; });
+      node.attr("transform", function (d) {
+        return "translate(" + d.x + "," + d.y + ")";
+    });
     }
   });
 }
@@ -163,3 +233,5 @@ function dragended(d) {
   d.fx = null;
   d.fy = null;
 }
+
+</script>
