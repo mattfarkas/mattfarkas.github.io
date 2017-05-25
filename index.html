@@ -77,8 +77,10 @@ body {
 <link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Open+Sans" />
 <body>
   <label for="nRatings" style="display: inline-block; text-align: left">
-    Min. Num. Co-Ratings = <span id="nRatings-value">100</span>
-    <input style="position: relative;" id="slideNum" class="input-range" type="range" value="100" min="50" max="150" step="5">
+    Min Num. Co-Ratings = <span id="nRatings-value">100</span>
+    <br><input style="position: relative;" id="slideNum" class="input-range" type="range" value="100" min="50" max="150" step="5">
+    <br>Max Avg. Difference in Rating = <span id="nAvg-diff">2.0</span>
+    <br><input style="position: relative;" id="slideNumDiff" class="input-range" type="range" value="2.0" min="0.4" max="2.0" step="0.1">
     <br><input type="checkbox" id="myCheckbox" unchecked> Labels
     <br><input type="checkbox" id="myFilter" unchecked> Filter by Restaurant
     <br><div id="table_container"></div>
@@ -108,18 +110,10 @@ d3.json("coratings.json", function(error, graph) {
                       }
                     });
 
-
-
     var options = dropDown.selectAll("option")
                    .data(graph.nodes.sort(function (a, b) {return d3.ascending(a.name, b.name)}))
                    .enter()
                    .append("option");
-
-    // var options = dropDown.selectAll("option")
-    //                .data(graph.nodes)
-    //                .enter()
-    //                .append("option");
-
 
     options.text(function (d) { return d.name; })
            .attr("value", function (d) { return d.id; });
@@ -158,6 +152,9 @@ d3.selectAll("#slideNum")
   //   d3.select("#nRatings-value").text(value); })
   .on("change",draw);
 
+d3.selectAll("#slideNumDiff")
+  .on("change",draw);
+
 d3.select("#myCheckbox").on("change",draw);
 d3.select("#myFilter").on("change",draw);
 
@@ -171,6 +168,10 @@ function draw() {
   // get # corating filter #
   var slideVal = d3.select("#slideNum").property("value");
   d3.select("#nRatings-value").text(slideVal);
+
+  // get avg diff filter
+  var avgDiff = d3.select("#slideNumDiff").property("value");
+  d3.select("#nAvg-diff").text(avgDiff);
 
   // get labels bool
   if(d3.select("#myCheckbox").property("checked")){
@@ -200,7 +201,7 @@ function draw() {
     filterID = d3.select('select').property('value');
 
     // if filtering, change min slider to new val
-    newSlider = graph.nodes.filter(function(d) {return d.id === filterID;}).map(function(d) {return d.maxCoratings;})[0];
+    newSlider  = graph.nodes.filter(function(d) {return d.id === filterID;}).map(function(d) {return d.maxCoratings;})[0];
     if (filter & newSlider < parseInt(slideVal)) {
       diff = newSlider%5;
       d3.select("#slideNum").property("value",newSlider-diff);
@@ -212,10 +213,10 @@ function draw() {
     var linkData = graph.links
       .filter(function(d) {
         if (filter) {
-          return d.numCrossReviews >= slideVal &
+          return d.numCrossReviews >= slideVal & d.avgDiff <= avgDiff &
                   (d.source === filterID || d.target === filterID);
         } else {
-         return d.numCrossReviews >= slideVal;
+         return d.numCrossReviews >= slideVal & d.avgDiff <= avgDiff;
         }
       });
 
@@ -230,7 +231,8 @@ function draw() {
                   (d.id === filterID ||
                     (sources.indexOf(d.id) >= 0) || (targets.indexOf(d.id) >= 0));
         } else {
-          return d.maxCoratings >= slideVal;
+          return d.maxCoratings >= slideVal &
+                    ((sources.indexOf(d.id) >= 0) || (targets.indexOf(d.id) >= 0));
         }
       });
 
